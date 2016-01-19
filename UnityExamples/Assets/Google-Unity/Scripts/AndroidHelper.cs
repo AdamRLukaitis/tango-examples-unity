@@ -1,21 +1,27 @@
-﻿#if UNITY_ANDROID && !UNITY_EDITOR
+﻿//-----------------------------------------------------------------------
+// <copyright file="AndroidHelper.cs" company="Google">
+//
+// Copyright 2015 Google Inc. All Rights Reserved.
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+// http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+//
+// </copyright>
+//-----------------------------------------------------------------------
+
+#if UNITY_ANDROID && !UNITY_EDITOR
 #define ANDROID_DEVICE
 #endif
-/*
- * Copyright 2014 Google Inc. All Rights Reserved.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *      http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+
 using System;
 using System.Collections;
 using UnityEngine;
@@ -32,18 +38,27 @@ public partial class AndroidHelper : MonoBehaviour
     private static AndroidLifecycleCallbacks m_callbacks;
 
     /// <summary>
+    /// The display time length of Android Toast.
+    /// </summary>
+    public enum ToastLength
+    {
+        SHORT = 0x00000000,
+        LONG = 0x00000001
+    }
+
+    /// <summary>
     /// Registers for the Android pause event.
     /// </summary>
     /// <param name="onPause">On pause.</param>
     public static void RegisterPauseEvent(OnPauseEventHandler onPause)
     {
         #if ANDROID_DEVICE
-		if(m_callbacks == null)
-		{
-			RegisterCallbacks();
-		}
+        if (m_callbacks == null)
+        {
+            _RegisterCallbacks();
+        }
 
-		m_callbacks.RegisterOnPause(onPause);
+        m_callbacks.RegisterOnPause(onPause);
         #endif
     }
 
@@ -54,12 +69,12 @@ public partial class AndroidHelper : MonoBehaviour
     public static void RegisterResumeEvent(OnResumeEventHandler onResume)
     {
         #if ANDROID_DEVICE
-		if(m_callbacks == null)
-		{
-			RegisterCallbacks();
-		}
-		
-		m_callbacks.RegisterOnResume(onResume);
+        if (m_callbacks == null)
+        {
+            _RegisterCallbacks();
+        }
+
+        m_callbacks.RegisterOnResume(onResume);
         #endif
     }
 
@@ -70,29 +85,12 @@ public partial class AndroidHelper : MonoBehaviour
     public static void RegisterOnActivityResultEvent(OnActivityResultEventHandler onActivityResult)
     {
         #if ANDROID_DEVICE
-		if(m_callbacks == null)
-		{
-			RegisterCallbacks();
-		}
-		
-		m_callbacks.RegisterOnActivityResult(onActivityResult);
-        #endif
-    }
+        if (m_callbacks == null)
+        {
+            _RegisterCallbacks();
+        }
 
-    /// <summary>
-    /// Inializes the AndroidJavaProxy for the Android lifecycle callbacks.
-    /// </summary>
-    private static void RegisterCallbacks()
-    {
-        #if ANDROID_DEVICE
-		m_callbacks = new AndroidLifecycleCallbacks();
-
-		m_unityActivity = GetUnityActivity();
-		if(m_unityActivity != null)
-		{
-			Debug.Log("AndroidLifecycle callback set");
-			m_unityActivity.Call("attachLifecycleListener", m_callbacks);
-		}
+        m_callbacks.RegisterOnActivityResult(onActivityResult);
         #endif
     }
 
@@ -103,20 +101,21 @@ public partial class AndroidHelper : MonoBehaviour
     public static AndroidJavaObject GetUnityActivity()
     {
         #if ANDROID_DEVICE
-		if(m_unityActivity == null)
-		{
+        if (m_unityActivity == null)
+        {
             try
             {
-    			AndroidJavaClass unityPlayer = new AndroidJavaClass("com.unity3d.player.UnityPlayer");
-    			m_unityActivity = unityPlayer.GetStatic<AndroidJavaObject>("currentActivity");
+                AndroidJavaClass unityPlayer = new AndroidJavaClass("com.unity3d.player.UnityPlayer");
+                m_unityActivity = unityPlayer.GetStatic<AndroidJavaObject>("currentActivity");
             }
-            catch(AndroidJavaException e)
+            catch (AndroidJavaException e)
             {
                 Debug.Log("AndroidJavaException : " + e.Message);
                 m_unityActivity = null;
             }
-		}
-		return m_unityActivity;
+        }
+
+        return m_unityActivity;
         #else
         return null;
         #endif
@@ -208,7 +207,7 @@ public partial class AndroidHelper : MonoBehaviour
     /// <summary>
     /// Used for performance logging from the Android side.
     /// </summary>
-    /// <param name="message">Message.</param>
+    /// <param name="message">Message string to log.</param>
     public static void PerformanceLog(string message)
     {
         AndroidJavaObject unityActivity = GetUnityActivity();
@@ -303,15 +302,16 @@ public partial class AndroidHelper : MonoBehaviour
         }
     }
 
+    /// DEPRECATED: Use the other two ShowAndroidToastMessage funcitons instead.
     /// <summary>
     /// Shows the android toast message.
     /// </summary>
-    /// <param name="message">Message.</param>
+    /// <param name="message">Message string to show in the toast.</param>
     /// <param name="callFinish">If set to <c>true</c> call finish on the unity activity.</param>
     public static void ShowAndroidToastMessage(string message, bool callFinish)
     {
         ShowAndroidToastMessage(message);
-
+        
         if (callFinish)
         {
             AndroidFinish();
@@ -321,26 +321,20 @@ public partial class AndroidHelper : MonoBehaviour
     /// <summary>
     /// Shows the android toast message.
     /// </summary>
-    /// <param name="message">Message.</param>
+    /// <param name="message">Message string to show in the toast.</param>
     public static void ShowAndroidToastMessage(string message)
     {
-        AndroidJavaObject unityActivity = GetUnityActivity();
-        
-        if (unityActivity != null)
-        {
-            try
-            {
-                AndroidJavaClass toastClass = new AndroidJavaClass("android.widget.Toast");
-                unityActivity.Call("runOnUiThread", new AndroidJavaRunnable(() => {
-                    AndroidJavaObject toastObject = toastClass.CallStatic<AndroidJavaObject>("makeText", unityActivity, message, 0x00000001);
-                    toastObject.Call("show");
-                }));
-            }
-            catch (AndroidJavaException e)
-            {
-                Debug.Log("AndroidJavaException : " + e.Message);
-            }
-        }
+        _ShowAndroidToastMessage(message, ToastLength.LONG);
+    }
+
+    /// <summary>
+    /// Shows the android toast message.
+    /// </summary>
+    /// <param name="message">Message string to show in the toast.</param>
+    /// <param name="length">Toast message time length.</param>
+    public static void ShowAndroidToastMessage(string message, ToastLength length)
+    {
+        _ShowAndroidToastMessage(message, length);
     }
 
     /// <summary>
@@ -349,7 +343,7 @@ public partial class AndroidHelper : MonoBehaviour
     public static void AndroidFinish()
     {
         AndroidJavaObject unityActivity = GetUnityActivity();
-		
+
         if (unityActivity != null)
         {
             try
@@ -362,7 +356,7 @@ public partial class AndroidHelper : MonoBehaviour
             }
         }
     }
-	
+
     /// <summary>
     /// Calls quit on the Unity Activity.
     /// </summary>
@@ -371,12 +365,56 @@ public partial class AndroidHelper : MonoBehaviour
         #if ANDROID_DEVICE
         try
         {
-    		AndroidJavaClass system = new AndroidJavaClass("java.lang.System");
-    		system.CallStatic("exit", 0);
+            AndroidJavaClass system = new AndroidJavaClass("java.lang.System");
+            system.CallStatic("exit", 0);
         }
-        catch(AndroidJavaException e)
+        catch (AndroidJavaException e)
         {
             Debug.Log("AndroidJavaException : " + e.Message);
+        }
+        #endif
+    }
+
+    /// <summary>
+    /// Shows the android toast message.
+    /// </summary>
+    /// <param name="message">Message string to show in the toast.</param>
+    /// <param name="length">Toast message time length.</param>
+    private static void _ShowAndroidToastMessage(string message, ToastLength length)
+    {
+        AndroidJavaObject unityActivity = GetUnityActivity();
+        
+        if (unityActivity != null)
+        {
+            try
+            {
+                AndroidJavaClass toastClass = new AndroidJavaClass("android.widget.Toast");
+                unityActivity.Call("runOnUiThread", new AndroidJavaRunnable(() =>
+                {
+                    AndroidJavaObject toastObject = toastClass.CallStatic<AndroidJavaObject>("makeText", unityActivity, message, (int)length);
+                    toastObject.Call("show");
+                }));
+            }
+            catch (AndroidJavaException e)
+            {
+                Debug.Log("AndroidJavaException : " + e.Message);
+            }
+        }
+    }
+
+    /// <summary>
+    /// Inializes the AndroidJavaProxy for the Android lifecycle callbacks.
+    /// </summary>
+    private static void _RegisterCallbacks()
+    {
+        #if ANDROID_DEVICE
+        m_callbacks = new AndroidLifecycleCallbacks();
+        
+        m_unityActivity = GetUnityActivity();
+        if (m_unityActivity != null)
+        {
+            Debug.Log("AndroidLifecycle callback set");
+            m_unityActivity.Call("attachLifecycleListener", m_callbacks);
         }
         #endif
     }

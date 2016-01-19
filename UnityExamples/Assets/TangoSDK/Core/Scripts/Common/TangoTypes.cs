@@ -29,6 +29,44 @@ using UnityEngine;
 namespace Tango
 {
     /// <summary>
+    /// The TangoCoordinateFramePair struct contains a pair of coordinate frames of reference.
+    ///
+    /// Tango pose data is calculated as a transformation between two frames
+    /// of reference (so, for example, you can be asking for the pose of the
+    /// device within a learned area).
+    ///
+    /// This struct is used to specify the desired base and target frames of
+    /// reference when requesting pose data.  You can also use it when you have
+    /// a TangoPoseData structure returned from the API and want to examine which
+    /// frames of reference were used to get that pose.
+    ///
+    /// For more information, including which coordinate frame pairs are valid,
+    /// see our page on
+    /// <a href ="/project-tango/overview/frames-of-reference">frames of reference</a>.
+    /// </summary>
+    [StructLayout(LayoutKind.Sequential)]
+    public struct TangoCoordinateFramePair
+    {
+        /// <summary>
+        /// Base frame of reference to compare against when requesting pose data.
+        /// For example, if you have loaded an area and want to find out where the
+        /// device is within it, you would use the
+        /// <code>TangoCoordinateFrameType.TANGO_COORDINATE_FRAME_AREA_DESCRIPTION</code> frame of reference
+        /// as your base.
+        /// </summary>
+        [MarshalAs(UnmanagedType.I4)]
+        public TangoEnums.TangoCoordinateFrameType baseFrame;
+
+        /// <summary>
+        /// Target frame of reference when requesting pose data, compared to the
+        /// base. For example, if you want the device's pose data, use
+        /// <code>TangoCoordinateFrameType.TANGO_COORDINATE_FRAME_DEVICE</code>.
+        /// </summary>
+        [MarshalAs(UnmanagedType.I4)]
+        public TangoEnums.TangoCoordinateFrameType targetFrame;
+    }
+
+    /// <summary>
     /// The TangoXYZij struct contains information returned from the depth sensor.
     /// </summary>
     [StructLayout(LayoutKind.Sequential)]
@@ -63,8 +101,8 @@ namespace Tango
         /// user's right, and +Y points toward the bottom of the screen. The origin is the focal centre of the color
         /// camera. The output is in units of metres.
         /// </summary>
-        [MarshalAs(UnmanagedType.ByValArray, SizeConst = 3, ArraySubType = UnmanagedType.SysUInt)]
-        public IntPtr[] xyz;
+        [MarshalAs(UnmanagedType.LPArray)]
+        public IntPtr xyz;
 
         /// <summary>
         /// The dimensions of the ij index buffer.
@@ -156,44 +194,6 @@ namespace Tango
         /// </summary>
         [MarshalAs(UnmanagedType.LPStr)]
         public string event_value;
-    }
-
-    /// <summary>
-    /// The TangoCoordinateFramePair struct contains a pair of coordinate frames of reference.
-    ///
-    /// Tango pose data is calculated as a transformation between two frames
-    /// of reference (so, for example, you can be asking for the pose of the
-    /// device within a learned area).
-    ///
-    /// This struct is used to specify the desired base and target frames of
-    /// reference when requesting pose data.  You can also use it when you have
-    /// a TangoPoseData structure returned from the API and want to examine which
-    /// frames of reference were used to get that pose.
-    ///
-    /// For more information, including which coordinate frame pairs are valid,
-    /// see our page on
-    /// <a href ="/project-tango/overview/frames-of-reference">frames of reference</a>.
-    /// </summary>
-    [StructLayout(LayoutKind.Sequential)]
-    public struct TangoCoordinateFramePair
-    {
-        /// <summary>
-        /// Base frame of reference to compare against when requesting pose data.
-        /// For example, if you have loaded an area and want to find out where the
-        /// device is within it, you would use the
-        /// <code>TangoCoordinateFrameType.TANGO_COORDINATE_FRAME_AREA_DESCRIPTION</code> frame of reference
-        /// as your base.
-        /// </summary>
-        [MarshalAs(UnmanagedType.I4)]
-        public TangoEnums.TangoCoordinateFrameType baseFrame;
-
-        /// <summary>
-        /// Target frame of reference when requesting pose data, compared to the
-        /// base. For example, if you want the device's pose data, use
-        /// <code>TangoCoordinateFrameType.TANGO_COORDINATE_FRAME_DEVICE</code>.
-        /// </summary>
-        [MarshalAs(UnmanagedType.I4)]
-        public TangoEnums.TangoCoordinateFrameType targetFrame;
     }
 
     /// <summary>
@@ -333,6 +333,41 @@ namespace Tango
         /// </summary>
         [MarshalAs(UnmanagedType.R8)]
         public double cy;
+
+        /// <summary>
+        /// Distortion coefficient 0.  Meaning of this value depends on the distortion model specified by
+        /// <c>calibration_type</c>.
+        /// </summary>
+        [MarshalAs(UnmanagedType.R8)]
+        public double distortion0;
+
+        /// <summary>
+        /// Distortion coefficient 1.  Meaning of this value depends on the distortion model specified by
+        /// <c>calibration_type</c>.
+        /// </summary>
+        [MarshalAs(UnmanagedType.R8)]
+        public double distortion1;
+
+        /// <summary>
+        /// Distortion coefficient 2.  Meaning of this value depends on the distortion model specified by
+        /// <c>calibration_type</c>.
+        /// </summary>
+        [MarshalAs(UnmanagedType.R8)]
+        public double distortion2;
+
+        /// <summary>
+        /// Distortion coefficient 3.  Meaning of this value depends on the distortion model specified by
+        /// <c>calibration_type</c>.
+        /// </summary>
+        [MarshalAs(UnmanagedType.R8)]
+        public double distortion3;
+
+        /// <summary>
+        /// Distortion coefficient 4.  Meaning of this value depends on the distortion model specified by
+        /// <c>calibration_type</c>.
+        /// </summary>
+        [MarshalAs(UnmanagedType.R8)]
+        public double distortion4;
     }
     
     /// <summary>
@@ -436,246 +471,11 @@ namespace Tango
             {
                 this.orientation[i] = poseToCopy.orientation[i];
             }
+
             for (int i = 0; i < 3; ++i)
             {
                 this.translation[i] = poseToCopy.translation[i];
             }
-        }
-    }
-
-    /// <summary>
-    /// Unity-side representation of a area description ID and its associated metadata.
-    /// 
-    /// Used to avoid too many conversions when needing to access the information.
-    /// </summary>
-    public class UUIDUnityHolder
-    {
-        /// <summary>
-        /// The Metadata for this area description ID.
-        /// </summary>
-        public Metadata uuidMetaData;
-
-        private UUID uuidObject;
-        private string uuidName;
-
-        /// <summary>
-        /// Initializes a new instance of the <see cref="Tango.UUIDUnityHolder"/> class.
-        /// </summary>
-        public UUIDUnityHolder()
-        {
-            uuidObject = new UUID();
-            uuidMetaData = new Metadata();
-            uuidObject.data = IntPtr.Zero;
-            uuidName = string.Empty;
-        }
-
-        /// <summary>
-        /// Prepares the UUID meta data by the calling uuidMetaData object's 
-        /// method - PopulateMetaDataKeyValues().
-        /// </summary>
-        public void PrepareUUIDMetaData()
-        {
-            uuidMetaData.PopulateMetaDataKeyValues();
-        }
-
-        /// <summary>
-        /// Allocates memory for the IntPtr of the UUID data to be filled out.
-        /// Uses Marshal.AllocHGlobal to initialize the IntPtr.
-        /// </summary>
-        public void AllocateDataBuffer()
-        {
-            uuidObject.data = Marshal.AllocHGlobal(Common.UUID_LENGTH);
-        }
-
-        /// <summary>
-        /// Copies the data contained by <c>uuidData</c> into our UUID object
-        /// data IntPtr.
-        /// </summary>
-        /// <param name="uuidData">The data marshalled by the UUID list object for this UUID object.</param>
-        public void SetDataUUID(byte[] uuidData)
-        {
-            if (uuidObject.data == IntPtr.Zero)
-            {
-                AllocateDataBuffer();
-            }
-            Marshal.Copy(uuidData, 0, uuidObject.data, Common.UUID_LENGTH);
-            SetDataUUID(System.Text.Encoding.UTF8.GetString(uuidData));
-        }
-
-        /// <summary>
-        /// Copies the data contained by <c>uuidData</c> into our UUID object
-        /// data IntPtr.
-        /// </summary>
-        /// <param name="uuidString">The UTF-8 encoded string for this UUID object.</param>
-        public void SetDataUUID(string uuidString)
-        {
-            uuidName = uuidString;
-        }
-
-        /// <summary>
-        /// Returns raw IntPtr to UUID data.
-        /// </summary>
-        /// <returns>The raw data UUID IntPtr.</returns>
-        public IntPtr GetRawDataUUID()
-        {
-            return uuidObject.data;
-        }
-
-        /// <summary>
-        /// Returns a human readable string in UTF-8 format of the UUID data.
-        /// </summary>
-        /// <returns>The UTF-8 string for the UUID.</returns>
-        public string GetStringDataUUID()
-        {
-            return uuidName;
-        }
-
-        /// <summary>
-        /// Determines whether or not the UUID object that we have is valid.
-        /// </summary>
-        /// <returns><c>true</c> if this instance contains a valid UUID object; otherwise, <c>false</c>.</returns>
-        public bool IsObjectValid()
-        {
-            return uuidObject != null && (uuidObject.data != IntPtr.Zero || !string.IsNullOrEmpty(uuidName));
-        }
-    }
-
-    /// <summary>
-    /// The unique id associated with a single area description.
-    /// 
-    /// Should be 36 characters including dashes and a null terminating character.
-    /// </summary>
-    [StructLayout(LayoutKind.Sequential)]
-    public class UUID
-    {
-        [MarshalAs(UnmanagedType.I4)]
-        public IntPtr data;
-    }
-
-    /// <summary>
-    /// List of all UUIDs on device.
-    /// </summary>
-    public class UUID_list
-    {
-        private UUIDUnityHolder[] uuids;
-        private int count;
-
-        /// <summary>
-        /// Count of all Area Description Files (Read only).
-        /// </summary>
-        /// <value>The count.</value>
-        public int Count
-        {
-            get { return count; }
-        }
-        
-        /// <summary>
-        /// Initializes a new instance of the <see cref="Tango.UUID_list"/> class.
-        /// </summary>
-        public UUID_list()
-        {
-            uuids = null;
-        }
-        
-        /// <summary>
-        /// Populates the UUID list.
-        /// </summary>
-        /// <param name="uuidNames">UUID names.</param>
-        public void PopulateUUIDList(string uuidNames)
-        {
-            System.Text.UTF8Encoding encoder = new System.Text.UTF8Encoding();
-            string[] splitNames = uuidNames.Split(',');
-            uuids = new UUIDUnityHolder[splitNames.Length];
-            count = splitNames.Length;
-            for (int i = 0; i < count; ++i)
-            {
-                if (uuids[i] == null)
-                {
-                    uuids[i] = new Tango.UUIDUnityHolder();
-                }
-
-                // Following three calls should be done in the same order always.
-                uuids[i].SetDataUUID(System.Text.Encoding.UTF8.GetString(encoder.GetBytes(splitNames[i])));
-                PoseProvider.GetAreaDescriptionMetaData(uuids[i]);
-                uuids[i].PrepareUUIDMetaData();
-            }
-        }
-        
-        /// <summary>
-        /// Returns the latest ADF UUID found in the list.
-        /// </summary>
-        /// <returns>UUIDUnityHolder object that contains the last ADF saved.</returns>
-        public UUIDUnityHolder GetLatestADFUUID()
-        {
-            if (uuids == null || (uuids != null && count <= 0))
-            {
-                return null;
-            }
-            return uuids[count - 1];
-        }
-
-        /// <summary>
-        /// Query specific ADF.
-        /// </summary>
-        /// <returns>UUIDUnityHolder object that contains the last ADF saved.</returns>
-        /// <param name="index">Index.</param>
-        public UUIDUnityHolder GetADFAtIndex(int index)
-        {
-            if (uuids == null || (index < 0 || index >= count))
-            {
-                return null;
-            }
-            return uuids[index];
-        }
-
-        /// <summary>
-        /// Gets the UUID as string.
-        /// </summary>
-        /// <returns>The UUID as string.</returns>
-        /// <param name="index">Index.</param>
-        public string GetUUIDAsString(int index)
-        {
-            if (uuids == null || (index < 0 || index >= count))
-            {
-                return null;
-            }
-            return uuids[index].GetStringDataUUID();
-        }
-
-        /// <summary>
-        /// Determines whether this instance has valid UUID entries.
-        /// </summary>
-        /// <returns><c>true</c> if this instance has at least one or more UUIDs; otherwise, <c>false</c>.</returns>
-        public bool HasEntries()
-        {
-            return count > 0;
-        }
-    }
-    
-    /// <summary>
-    /// UUID Metadata list.
-    /// </summary>
-    public class Metadata
-    {
-        public IntPtr meta_data_pointer;
-        private Dictionary<string, string> m_keyValuePairs = new Dictionary<string, string>();
-       
-        /// <summary>
-        /// Populates the meta data key values pairs.
-        /// </summary>
-        public void PopulateMetaDataKeyValues()
-        {
-            PoseProvider.PopulateAreaDescriptionMetaDataKeyValues(meta_data_pointer, ref m_keyValuePairs);
-        }
-
-        /// <summary>
-        /// Returns the dictionary object with the Metadata's Key Value pairs.
-        /// PopulateMetaDataKeyValues() should be called before calling this.
-        /// </summary>
-        /// <returns>The meta data key values.</returns>
-        public Dictionary<string, string> GetMetaDataKeyValues()
-        {
-            return m_keyValuePairs;
         }
     }
 

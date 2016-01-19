@@ -25,23 +25,11 @@ using UnityEngine;
 /// </summary>
 public partial class AndroidHelper
 {
-    /// <summary>
-    /// Holds the current and default orientation of the device.
-    /// </summary>
-    public struct TangoDeviceOrientation
-    {
-        /// <summary>
-        /// The default orientation of the device.  This is the "natural" way to hold this device.
-        /// </summary>
-        public DeviceOrientation defaultRotation;
+    private const string PERMISSION_REQUEST_ACTIVITY = "com.google.atap.tango.RequestPermissionActivity";
 
-        /// <summary>
-        /// The current orientation of the device.
-        /// </summary>
-        public DeviceOrientation currentRotation;
-    }
-
-    private const string PERMISSION_REQUESTER = "com.projecttango.permissionrequester.RequestManagerActivity";
+    private const string TANGO_APPLICATION_ID = "com.projecttango.tango";
+    private const string LAUNCH_INTENT_SIGNATURE = "launchIntent";
+    private const string ADF_IMPORT_EXPORT_ACTIVITY = "com.google.atap.tango.RequestImportExportActivity";
 
 #if UNITY_ANDROID && !UNITY_EDITOR
     private static AndroidJavaObject m_tangoHelper = null;
@@ -90,7 +78,11 @@ public partial class AndroidHelper
             
             if (requestCode != 0)
             {
-                unityActivity.Call("launchIntent", "com.projecttango.tango", "com.google.atap.tango.RequestPermissionActivity", args, requestCode);
+                unityActivity.Call(LAUNCH_INTENT_SIGNATURE,
+                                   TANGO_APPLICATION_ID,
+                                   PERMISSION_REQUEST_ACTIVITY,
+                                   args,
+                                   requestCode);
             }
             else
             {
@@ -136,7 +128,7 @@ public partial class AndroidHelper
         
         return deviceOrientation;
     }
-    
+
     /// <summary>
     /// Check if the Tango Core package is installed.
     /// </summary>
@@ -147,12 +139,102 @@ public partial class AndroidHelper
         
         if (unityActivity != null)
         {
-            if (GetPackageInfo("com.projecttango.tango") != null)
+            if (GetPackageInfo(TANGO_APPLICATION_ID) != null)
             {
                 return true;
             }
         }
         
         return false;
+    }
+
+    /// <summary>
+    /// Connects to the TangoCloudService.
+    /// </summary>
+    /// <returns><c>true</c> if we successfully connect; otherwise, <c>false</c>.</returns>
+    internal static bool ConnectCloud()
+    {
+        AndroidJavaObject tangoObject = GetTangoHelperObject();
+
+        if (tangoObject != null)
+        {
+            return tangoObject.Call<bool>("connectCloud");
+        }
+
+        return false;
+    }
+
+    /// <summary>
+    /// Disconnects from the TangoCloudService.
+    /// </summary>
+    /// <returns><c>true</c> if we successfully disconnect; otherwise, <c>false</c>.</returns>
+    internal static bool DisconnectCloud()
+    {
+        AndroidJavaObject tangoObject = GetTangoHelperObject();
+
+        if (tangoObject != null)
+        {
+            return tangoObject.Call<bool>("disconnectCloud");
+        }
+
+        return false;
+    }
+
+    /// <summary>
+    /// Call export ADF permission activity.
+    /// </summary>
+    /// <param name="srcAdfUuid">ADF that is going to be exported.</param>
+    /// <param name="exportLocation">Path to the export location.</param>
+    internal static void StartExportADFActivity(string srcAdfUuid, string exportLocation)
+    {
+        AndroidJavaObject unityActivity = GetUnityActivity();
+
+        if (unityActivity != null)
+        {
+            string[] args = new string[2];
+            args[0] = "SOURCE_UUID:" + srcAdfUuid;
+            args[1] = "DESTINATION_FILE:" + exportLocation;
+            unityActivity.Call(LAUNCH_INTENT_SIGNATURE,
+                               TANGO_APPLICATION_ID,
+                               ADF_IMPORT_EXPORT_ACTIVITY,
+                               args,
+                               Tango.Common.TANGO_ADF_EXPORT_REQUEST_CODE);
+        }
+    }
+
+    /// <summary>
+    /// Call import ADF permission activity.
+    /// </summary>
+    /// <param name="adfPath">Path to the ADF that is going to be imported.</param>
+    internal static void StartImportADFActivity(string adfPath)
+    {
+        AndroidJavaObject unityActivity = GetUnityActivity();
+
+        if (unityActivity != null)
+        {
+            string[] args = new string[1];
+            args[0] = "SOURCE_FILE:" + adfPath;
+            unityActivity.Call(LAUNCH_INTENT_SIGNATURE,
+                               TANGO_APPLICATION_ID,
+                               ADF_IMPORT_EXPORT_ACTIVITY,
+                               args,
+                               Tango.Common.TANGO_ADF_IMPORT_REQUEST_CODE);
+        }
+    }
+
+    /// <summary>
+    /// Holds the current and default orientation of the device.
+    /// </summary>
+    public struct TangoDeviceOrientation
+    {
+        /// <summary>
+        /// The default orientation of the device.  This is the "natural" way to hold this device.
+        /// </summary>
+        public DeviceOrientation defaultRotation;
+
+        /// <summary>
+        /// The current orientation of the device.
+        /// </summary>
+        public DeviceOrientation currentRotation;
     }
 }

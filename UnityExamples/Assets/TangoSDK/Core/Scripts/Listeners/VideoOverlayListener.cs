@@ -17,13 +17,14 @@
 //
 // </copyright>
 //-----------------------------------------------------------------------
-using System.Collections;
-using System;
-using System.Runtime.InteropServices;
-using UnityEngine;
 
 namespace Tango
 {
+    using System;
+    using System.Collections;
+    using System.Runtime.InteropServices;
+    using UnityEngine;
+
     /// <summary>
     /// Delegate for Tango image events.
     /// </summary>
@@ -47,6 +48,11 @@ namespace Tango
         private VideoOverlayProvider.TangoService_onImageAvailable m_onImageAvailable;
         private VideoOverlayProvider.TangoService_onUnityFrameAvailable m_onUnityFrameAvailable;
 
+        private TangoEnums.TangoCameraId m_previousCameraId;
+        private TangoUnityImageData m_previousImageBuffer;
+        private bool m_shouldSendEvent = false;
+        private bool m_usingExperimentalOverlay = false;
+
         /// <summary>
         /// Called when a new Tango image is available.
         /// </summary>
@@ -56,11 +62,6 @@ namespace Tango
         /// Called when a new Tange image is available (experimental version).
         /// </summary>
         private event OnExperimentalTangoImageAvailableEventHandler OnExperimentalTangoImageAvailable;
-
-        private TangoEnums.TangoCameraId m_previousCameraId;
-        private TangoUnityImageData m_previousImageBuffer;
-        private bool m_shouldSendEvent = false;
-        private bool m_usingExperimentalOverlay = false;
 
         /// <summary>
         /// Register to get Tango image events.
@@ -170,15 +171,13 @@ namespace Tango
         }
 
         /// <summary>
-        /// DEPRECATED: Handle the callback sent by the Tango Service
-        /// when a new image is sampled.
+        /// Handle the callback sent by the Tango Service when a new image is sampled.
         /// </summary>
         /// <param name="callbackContext">Callback context.</param>
         /// <param name="cameraId">Camera identifier.</param>
         /// <param name="imageBuffer">Image buffer.</param>
-        protected void _OnImageAvailable(IntPtr callbackContext,
-                                         TangoEnums.TangoCameraId cameraId, 
-                                         TangoImageBuffer imageBuffer)
+        private void _OnImageAvailable(IntPtr callbackContext, TangoEnums.TangoCameraId cameraId,
+                                       TangoImageBuffer imageBuffer)
         {
             m_previousCameraId = cameraId;
 
@@ -200,11 +199,11 @@ namespace Tango
         }
 
         /// <summary>
-        /// DEPRECATED: Handle the callback set by the Tango Service when a new image is available.
+        /// Handle the callback set by the Tango Service when a new image is available.
         /// </summary>
         /// <param name="callbackContext">Callback context.</param>
         /// <param name="cameraId">Camera identifier.</param>
-        protected void _OnExperimentalUnityFrameAvailable(IntPtr callbackContext, Tango.TangoEnums.TangoCameraId cameraId)
+        private void _OnExperimentalUnityFrameAvailable(IntPtr callbackContext, Tango.TangoEnums.TangoCameraId cameraId)
         {
             m_previousCameraId = cameraId;
             m_shouldSendEvent = true;

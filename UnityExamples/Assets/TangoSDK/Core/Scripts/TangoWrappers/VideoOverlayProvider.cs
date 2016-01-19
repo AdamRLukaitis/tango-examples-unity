@@ -17,26 +17,30 @@
 //
 // </copyright>
 //-----------------------------------------------------------------------
-using System;
-using System.Collections;
-using System.Collections.Generic;
-using System.Runtime.InteropServices;
-using UnityEngine;
-using Tango;
 
 namespace Tango
 {
+    using System;
+    using System.Collections;
+    using System.Collections.Generic;
+    using System.Runtime.InteropServices;
+    using Tango;
+    using UnityEngine;
+
     /// <summary>
     /// C API wrapper for the Tango video overlay interface.
     /// </summary>
     public class VideoOverlayProvider
     {
+        private static readonly string CLASS_NAME = "VideoOverlayProvider";
+        private static IntPtr callbackContext = IntPtr.Zero;
+
         /// <summary>
         /// Tango video overlay C callback function signature.
         /// </summary>
         /// <param name="callbackContext">Callback context.</param>
         /// <param name="cameraId">Camera ID.</param>
-        /// <param name="image">Image.</param> 
+        /// <param name="image">Image buffer.</param> 
         [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
         internal delegate void TangoService_onImageAvailable(IntPtr callbackContext, Tango.TangoEnums.TangoCameraId cameraId, [In, Out] TangoImageBuffer image);
 
@@ -47,10 +51,7 @@ namespace Tango
         /// <param name="cameraId">Camera ID.</param>
         [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
         internal delegate void TangoService_onUnityFrameAvailable(IntPtr callbackContext, Tango.TangoEnums.TangoCameraId cameraId);
-        
-        private static readonly string CLASS_NAME = "VideoOverlayProvider";
-        private static IntPtr callbackContext = IntPtr.Zero;
-        
+
         /// <summary>
         /// Connect a Texture ID to a camera; the camera is selected by specifying a TangoCameraId.
         /// 
@@ -77,6 +78,47 @@ namespace Tango
         }
 
         /// <summary>
+        /// Update the texture that has been connected to camera referenced by TangoCameraId with the latest image
+        /// from the camera.
+        /// </summary>
+        /// <returns>The timestamp of the image that has been pushed to the connected texture.</returns>
+        /// <param name="cameraId">
+        /// The ID of the camera to connect this texture to.  Only <code>TANGO_CAMERA_COLOR</code> and
+        /// <code>TANGO_CAMERA_FISHEYE</code> are supported.
+        /// </param>
+        public static double RenderLatestFrame(TangoEnums.TangoCameraId cameraId)
+        {
+            double timestamp = 0.0;
+            int returnValue = VideoOverlayAPI.TangoService_updateTexture(cameraId, ref timestamp);
+            if (returnValue != Common.ErrorType.TANGO_SUCCESS)
+            {
+                Debug.Log("VideoOverlayProvider.UpdateTexture() Texture was not updated by camera!");
+            }
+            
+            return timestamp;
+        }
+
+        /// <summary>
+        /// Get the intrinsic calibration parameters for a given camera.
+        /// 
+        /// The intrinsics are as specified by the TangoCameraIntrinsics struct.  Intrinsics are read from the
+        /// on-device intrinsics file (typically <code>/sdcard/config/calibration.xml</code>, but to ensure 
+        /// compatibility applications should only access these parameters via the API), or default internal model 
+        /// parameters corresponding to the device are used if the calibration.xml file is not found.
+        /// </summary>
+        /// <param name="cameraId">The camera ID to retrieve the calibration intrinsics for.</param>
+        /// <param name="intrinsics">A TangoCameraIntrinsics filled with calibration intrinsics for the camera.</param>
+        public static void GetIntrinsics(TangoEnums.TangoCameraId cameraId, [Out] TangoCameraIntrinsics intrinsics)
+        {
+            int returnValue = VideoOverlayAPI.TangoService_getCameraIntrinsics(cameraId, intrinsics);
+            
+            if (returnValue != Common.ErrorType.TANGO_SUCCESS)
+            {
+                Debug.Log("IntrinsicsProviderAPI.TangoService_getCameraIntrinsics() failed!");
+            }
+        }
+
+        /// <summary>
         /// Experimental API only, subject to change.  Connect a Texture IDs to a camera.
         /// 
         /// The camera is selected via TangoCameraId.  Currently only TANGO_CAMERA_COLOR is supported.  The texture
@@ -96,7 +138,7 @@ namespace Tango
         /// supported.
         /// </param>
         /// <param name="textures">The texture IDs to use for the Y, Cb, and Cr planes.</param>
-        /// <param name="onUnityFrameAvailable">Callback.</param>
+        /// <param name="onUnityFrameAvailable">Callback method.</param>
         internal static void ExperimentalConnectTexture(TangoEnums.TangoCameraId cameraId, YUVTexture textures, TangoService_onUnityFrameAvailable onUnityFrameAvailable)
         {
             int returnValue = VideoOverlayAPI.TangoService_Experimental_connectTextureIdUnity(cameraId, 
@@ -109,47 +151,6 @@ namespace Tango
             if (returnValue != Common.ErrorType.TANGO_SUCCESS)
             {
                 Debug.Log("VideoOverlayProvider.ConnectTexture() Texture was not connected to camera!");
-            }
-        }
-
-        /// <summary>
-        /// Update the texture that has been connected to camera referenced by TangoCameraId with the latest image
-        /// from the camera.
-        /// </summary>
-        /// <returns>The timestamp of the image that has been pushed to the connected texture.</returns>
-        /// <param name="cameraId">
-        /// The ID of the camera to connect this texture to.  Only <code>TANGO_CAMERA_COLOR</code> and
-        /// <code>TANGO_CAMERA_FISHEYE</code> are supported.
-        /// </param>
-        public static double RenderLatestFrame(TangoEnums.TangoCameraId cameraId)
-        {
-            double timestamp = 0.0;
-            int returnValue = VideoOverlayAPI.TangoService_updateTexture(cameraId, ref timestamp);
-            if (returnValue != Common.ErrorType.TANGO_SUCCESS)
-            {
-                Debug.Log("VideoOverlayProvider.UpdateTexture() Texture was not updated by camera!");
-            }
-
-            return timestamp;
-        }
-        
-        /// <summary>
-        /// Get the intrinsic calibration parameters for a given camera.
-        /// 
-        /// The intrinsics are as specified by the TangoCameraIntrinsics struct.  Intrinsics are read from the
-        /// on-device intrinsics file (typically <code>/sdcard/config/calibration.xml</code>, but to ensure 
-        /// compatibility applications should only access these parameters via the API), or default internal model 
-        /// parameters corresponding to the device are used if the calibration.xml file is not found.
-        /// </summary>
-        /// <param name="cameraId">The camera ID to retrieve the calibration intrinsics for.</param>
-        /// <param name="intrinsics">A TangoCameraIntrinsics filled with calibration intrinsics for the camera.</param>
-        public static void GetIntrinsics(TangoEnums.TangoCameraId cameraId, [Out] TangoCameraIntrinsics intrinsics)
-        {
-            int returnValue = VideoOverlayAPI.TangoService_getCameraIntrinsics(cameraId, intrinsics);
-            
-            if (returnValue != Common.ErrorType.TANGO_SUCCESS)
-            {
-                Debug.Log("IntrinsicsProviderAPI.TangoService_getCameraIntrinsics() failed!");
             }
         }
 
@@ -287,15 +288,18 @@ namespace Tango
         /// <param name="yPlaneHeight">Y plane height.</param>
         /// <param name="uvPlaneWidth">UV plane width.</param>
         /// <param name="uvPlaneHeight">UV plane height.</param>
-        /// <param name="format">Format.</param>
+        /// <param name="format">Texture format.</param>
         /// <param name="mipmap">If set to <c>true</c> mipmap.</param>
         public YUVTexture(int yPlaneWidth, int yPlaneHeight,
                           int uvPlaneWidth, int uvPlaneHeight,
                           TextureFormat format, bool mipmap)
         {
             m_videoOverlayTextureY = new Texture2D(yPlaneWidth, yPlaneHeight, format, mipmap);
+            m_videoOverlayTextureY.filterMode = FilterMode.Point;
             m_videoOverlayTextureCb = new Texture2D(uvPlaneWidth, uvPlaneHeight, format, mipmap);
+            m_videoOverlayTextureCb.filterMode = FilterMode.Point;
             m_videoOverlayTextureCr = new Texture2D(uvPlaneWidth, uvPlaneHeight, format, mipmap);
+            m_videoOverlayTextureCr.filterMode = FilterMode.Point;
         }
         
         /// <summary>

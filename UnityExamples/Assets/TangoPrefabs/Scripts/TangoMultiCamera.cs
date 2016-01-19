@@ -27,15 +27,11 @@ using UnityEngine;
 /// </summary>
 public class TangoMultiCamera : MonoBehaviour
 {
-    /// <summary>
-    /// The different camera types supported by this multi-camera.
-    /// </summary>
-    public enum CameraType
-    {
-        FirstPerson,
-        ThirdPerson,
-        TopDown
-    }
+    // UI fields.
+    public const float UI_BUTTON_SIZE_X = 125.0f;
+    public const float UI_BUTTON_SIZE_Y = 65.0f;
+    public const float UI_BUTTON_GAP_X = 5.0f;
+    public const float UI_BUTTON_GAP_Y = 3.0f;
 
     /// <summary>
     /// The target object to follow.
@@ -51,7 +47,7 @@ public class TangoMultiCamera : MonoBehaviour
     /// The default camera type.
     /// </summary>
     public CameraType m_defaultCameraType = CameraType.FirstPerson;
-    
+
     /// <summary>
     /// Scaling factor when doing a pinch to zoom gesture.
     /// </summary>
@@ -138,6 +134,16 @@ public class TangoMultiCamera : MonoBehaviour
     private Vector3 m_topDownOffsetStart;
 
     /// <summary>
+    /// The different camera types supported by this multi-camera.
+    /// </summary>
+    public enum CameraType
+    {
+        FirstPerson,
+        ThirdPerson,
+        TopDown
+    }
+
+    /// <summary>
     /// Start is called on the frame when a script is enabled.
     /// </summary>
     public void Start() 
@@ -167,7 +173,7 @@ public class TangoMultiCamera : MonoBehaviour
                     m_touchStartPosition = touch.position;
                     m_thirdPersonRotationEulerStart = m_thirdPersonRotationEuler;
                 }
-                else if (touch.phase == TouchPhase.Moved)
+                else if (touch.phase == TouchPhase.Moved && GUIUtility.hotControl == 0)
                 {
                     Vector2 delta = touch.position - m_touchStartPosition;
                     
@@ -175,6 +181,7 @@ public class TangoMultiCamera : MonoBehaviour
                     m_thirdPersonRotationEuler.y = m_thirdPersonRotationEulerStart.y + delta.x;
                 }
             }
+
             if (Input.touchCount == 2)
             {
                 // Multiple touch does pinch to zoom.
@@ -188,7 +195,8 @@ public class TangoMultiCamera : MonoBehaviour
                     m_touchStartDistance = xDist + yDist;
                     m_thirdPersonDistanceStart = m_thirdPersonDistance;
                 }
-                else if (touch0.phase == TouchPhase.Moved || touch1.phase == TouchPhase.Moved)
+                else if ((touch0.phase == TouchPhase.Moved || touch1.phase == TouchPhase.Moved)
+                         && GUIUtility.hotControl == 0)
                 {
                     float xDist = Mathf.Abs(touch0.position.x - touch1.position.x);
                     float yDist = Mathf.Abs(touch0.position.y - touch1.position.y);
@@ -229,7 +237,7 @@ public class TangoMultiCamera : MonoBehaviour
                     m_touchStartPosition = touch.position;
                     m_topDownOffsetStart = m_topDownOffset;
                 }
-                else if (touch.phase == TouchPhase.Moved)
+                else if (touch.phase == TouchPhase.Moved && GUIUtility.hotControl == 0)
                 {
                     Vector2 delta = TOP_DOWN_PAN_SCALE * (touch.position - m_touchStartPosition);
                     
@@ -250,7 +258,8 @@ public class TangoMultiCamera : MonoBehaviour
                     m_touchStartDistance = xDist + yDist;
                     m_topDownOffsetStart = m_topDownOffset;
                 }
-                else if (touch0.phase == TouchPhase.Moved || touch1.phase == TouchPhase.Moved)
+                else if ((touch0.phase == TouchPhase.Moved || touch1.phase == TouchPhase.Moved)
+                         && GUIUtility.hotControl == 0)
                 {
                     float xDist = Mathf.Abs(touch0.position.x - touch1.position.x);
                     float yDist = Mathf.Abs(touch0.position.y - touch1.position.y);
@@ -292,26 +301,28 @@ public class TangoMultiCamera : MonoBehaviour
             return;
         }
 
-        if (GUI.Button(new Rect(Screen.width - Common.UI_BUTTON_SIZE_X - Common.UI_BUTTON_GAP_X, 
-                                Screen.height - ((Common.UI_BUTTON_SIZE_Y + Common.UI_LABEL_GAP_Y) * 3),
-                                Common.UI_BUTTON_SIZE_X, 
-                                Common.UI_BUTTON_SIZE_Y),
+        if (GUI.Button(new Rect(Screen.width - UI_BUTTON_SIZE_X - UI_BUTTON_GAP_X, 
+                                Screen.height - ((UI_BUTTON_SIZE_Y + UI_BUTTON_GAP_Y) * 3),
+                                UI_BUTTON_SIZE_X, 
+                                UI_BUTTON_SIZE_Y),
                        "<size=20>First</size>"))
         {
             EnableCamera(CameraType.FirstPerson);
         }
-        if (GUI.Button(new Rect(Screen.width - Common.UI_BUTTON_SIZE_X - Common.UI_BUTTON_GAP_X, 
-                                Screen.height - ((Common.UI_BUTTON_SIZE_Y + Common.UI_LABEL_GAP_Y) * 2),
-                                Common.UI_BUTTON_SIZE_X, 
-                                Common.UI_BUTTON_SIZE_Y),
+
+        if (GUI.Button(new Rect(Screen.width - UI_BUTTON_SIZE_X - UI_BUTTON_GAP_X, 
+                                Screen.height - ((UI_BUTTON_SIZE_Y + UI_BUTTON_GAP_Y) * 2),
+                                UI_BUTTON_SIZE_X, 
+                                UI_BUTTON_SIZE_Y),
                        "<size=20>Third</size>"))
         {
             EnableCamera(CameraType.ThirdPerson);
         }
-        if (GUI.Button(new Rect(Screen.width - Common.UI_BUTTON_SIZE_X - Common.UI_BUTTON_GAP_X, 
-                                Screen.height - (Common.UI_BUTTON_SIZE_Y + Common.UI_LABEL_GAP_Y),
-                                Common.UI_BUTTON_SIZE_X, 
-                                Common.UI_BUTTON_SIZE_Y),
+
+        if (GUI.Button(new Rect(Screen.width - UI_BUTTON_SIZE_X - UI_BUTTON_GAP_X, 
+                                Screen.height - (UI_BUTTON_SIZE_Y + UI_BUTTON_GAP_Y),
+                                UI_BUTTON_SIZE_X, 
+                                UI_BUTTON_SIZE_Y),
                        "<size=20>Top</size>"))
         {
             EnableCamera(CameraType.TopDown);
@@ -339,6 +350,7 @@ public class TangoMultiCamera : MonoBehaviour
             m_topDownOffset.Set(0, 7, 0);
             break;
         }
+
         m_currentCamera = cameraType;
     }
 }

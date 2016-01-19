@@ -25,15 +25,11 @@ using UnityEngine;
 /// </summary>
 public class TangoGestureCamera : MonoBehaviour
 {
-    /// <summary>
-    /// Camera type enum.
-    /// </summary>
-    public enum CameraType
-    {
-        FIRST_PERSON = 0x1,
-        THIRD_PERSON = 0x2,
-        TOP_DOWN = 0x4
-    }
+    // UI fields.
+    public const float UI_BUTTON_SIZE_X = 125.0f;
+    public const float UI_BUTTON_SIZE_Y = 65.0f;
+    public const float UI_BUTTON_GAP_X = 5.0f;
+    public const float UI_BUTTON_GAP_Y = 3.0f;
     
     public GameObject m_targetFollowingObject;
 
@@ -42,10 +38,9 @@ public class TangoGestureCamera : MonoBehaviour
 
     // The default camera mode.
     public CameraType m_defaultCameraMode = CameraType.FIRST_PERSON;
-    
+
     private Vector3 m_curOffset;
     
-    private Vector3 m_firstPersonCamOffset = Vector3.zero;
     private Vector3 m_thirdPersonCamOffset = new Vector3(0.0f, 3.0f, -3.0f);
     private Vector3 m_topDownCamOffset = new Vector3(0.0f, 7.0f, 0.0f);
     
@@ -67,7 +62,17 @@ public class TangoGestureCamera : MonoBehaviour
     
     private Vector2 topDownStartPos = Vector2.zero;
     private Vector3 thirdPersonCamStartOffset;
-    
+
+    /// <summary>
+    /// Camera type enum.
+    /// </summary>
+    public enum CameraType
+    {
+        FIRST_PERSON = 0x1,
+        THIRD_PERSON = 0x2,
+        TOP_DOWN = 0x4
+    }
+
     /// <summary>
     /// Enabled based on camera type.
     /// </summary>
@@ -82,6 +87,7 @@ public class TangoGestureCamera : MonoBehaviour
                 transform.rotation = m_targetFollowingObject.transform.rotation;
                 break;
             }
+
             case CameraType.THIRD_PERSON:
             {
                 startThirdPersonRotationX = 45.0f;
@@ -100,12 +106,14 @@ public class TangoGestureCamera : MonoBehaviour
                 transform.LookAt(m_targetFollowingObject.transform.position);
                 break;
             }
+
             case CameraType.TOP_DOWN:
             {
                 m_topDownCamOffset = new Vector3(0.0f, 7.0f, 0.0f);
                 break;
             }
         }
+
         m_currentCamera = cameraType;
     }
     
@@ -137,7 +145,8 @@ public class TangoGestureCamera : MonoBehaviour
                 startThirdPersonRotationX = curThirdPersonRotationX;
                 startThirdPersonRotationY = curThirdPersonRotationY;
             }
-            if (Input.touchCount == 1 && Input.GetTouch(0).phase == TouchPhase.Moved)
+
+            if (Input.touchCount == 1 && Input.GetTouch(0).phase == TouchPhase.Moved && GUIUtility.hotControl == 0)
             {
                 Vector2 offset = Input.touches[0].deltaPosition;
                 curThirdPersonRotationX += -offset.y;
@@ -151,8 +160,10 @@ public class TangoGestureCamera : MonoBehaviour
                 touchStartDist = Mathf.Abs(Input.GetTouch(0).position.x - Input.GetTouch(1).position.x) +
                     Mathf.Abs(Input.GetTouch(0).position.y - Input.GetTouch(1).position.y);
             }
-            if (Input.touchCount == 2 && 
-                (Input.GetTouch(0).phase == TouchPhase.Moved || Input.GetTouch(1).phase == TouchPhase.Moved))
+
+            if (Input.touchCount == 2
+                && (Input.GetTouch(0).phase == TouchPhase.Moved || Input.GetTouch(1).phase == TouchPhase.Moved)
+                && GUIUtility.hotControl == 0)
             {
                 float curTouchDist = Mathf.Abs(Input.GetTouch(0).position.x - Input.GetTouch(1).position.x) +
                     Mathf.Abs(Input.GetTouch(0).position.y - Input.GetTouch(1).position.y);
@@ -176,7 +187,8 @@ public class TangoGestureCamera : MonoBehaviour
                 topDownStartPos = new Vector2(m_topDownCamOffset.x, 
                                               m_topDownCamOffset.z);
             }
-            if (Input.touchCount == 1 && Input.GetTouch(0).phase == TouchPhase.Moved)
+
+            if (Input.touchCount == 1 && Input.GetTouch(0).phase == TouchPhase.Moved && GUIUtility.hotControl == 0)
             {
                 Vector2 offset = Input.GetTouch(0).position - touchStartPoint;
                 Vector2 curPos = topDownStartPos - (offset / 300.0f);
@@ -191,8 +203,10 @@ public class TangoGestureCamera : MonoBehaviour
                     Mathf.Abs(Input.GetTouch(0).position.y - Input.GetTouch(1).position.y);
                 topDownStartY = m_topDownCamOffset.y;
             }
-            if (Input.touchCount == 2 && 
-                (Input.GetTouch(0).phase == TouchPhase.Moved || Input.GetTouch(1).phase == TouchPhase.Moved))
+
+            if (Input.touchCount == 2
+                && (Input.GetTouch(0).phase == TouchPhase.Moved || Input.GetTouch(1).phase == TouchPhase.Moved)
+                && GUIUtility.hotControl == 0)
             {
                 float curTouchDist = Mathf.Abs(Input.GetTouch(0).position.x - Input.GetTouch(1).position.x) +
                     Mathf.Abs(Input.GetTouch(0).position.y - Input.GetTouch(1).position.y);
@@ -203,6 +217,7 @@ public class TangoGestureCamera : MonoBehaviour
                 
                 m_topDownCamOffset = newPos;
             }
+
             if (Input.touchCount == 2 && (Input.GetTouch(0).phase == TouchPhase.Ended || Input.GetTouch(1).phase == TouchPhase.Ended))
             {
                 if (Input.GetTouch(0).phase == TouchPhase.Ended)
@@ -211,6 +226,7 @@ public class TangoGestureCamera : MonoBehaviour
                     topDownStartPos = new Vector2(m_topDownCamOffset.x,
                                                   m_topDownCamOffset.z);
                 }
+
                 if (Input.GetTouch(1).phase == TouchPhase.Ended)
                 {
                     touchStartPoint = Input.GetTouch(0).position;
@@ -218,6 +234,7 @@ public class TangoGestureCamera : MonoBehaviour
                                                   m_topDownCamOffset.z);
                 }
             }
+
             transform.rotation = Quaternion.Euler(new Vector3(90.0f, 0.0f, 0.0f));
             transform.position = m_targetFollowingObject.transform.position + m_topDownCamOffset;
         }
@@ -233,24 +250,26 @@ public class TangoGestureCamera : MonoBehaviour
             return;
         }
 
-        if (GUI.Button(new Rect(Screen.width - Common.UI_BUTTON_SIZE_X - Common.UI_BUTTON_GAP_X, 
-                                Screen.height - ((Common.UI_BUTTON_SIZE_Y + Common.UI_LABEL_GAP_Y) * 3),
-                                Common.UI_BUTTON_SIZE_X, 
-                                Common.UI_BUTTON_SIZE_Y), "<size=20>First</size>"))
+        if (GUI.Button(new Rect(Screen.width - UI_BUTTON_SIZE_X - UI_BUTTON_GAP_X, 
+                                Screen.height - ((UI_BUTTON_SIZE_Y + UI_BUTTON_GAP_Y) * 3),
+                                UI_BUTTON_SIZE_X, 
+                                UI_BUTTON_SIZE_Y), "<size=20>First</size>"))
         {
             EnableCamera(CameraType.FIRST_PERSON);
         }
-        if (GUI.Button(new Rect(Screen.width - Common.UI_BUTTON_SIZE_X - Common.UI_BUTTON_GAP_X, 
-                                Screen.height - ((Common.UI_BUTTON_SIZE_Y + Common.UI_LABEL_GAP_Y) * 2),
-                                Common.UI_BUTTON_SIZE_X, 
-                                Common.UI_BUTTON_SIZE_Y), "<size=20>Third</size>"))
+
+        if (GUI.Button(new Rect(Screen.width - UI_BUTTON_SIZE_X - UI_BUTTON_GAP_X, 
+                                Screen.height - ((UI_BUTTON_SIZE_Y + UI_BUTTON_GAP_Y) * 2),
+                                UI_BUTTON_SIZE_X, 
+                                UI_BUTTON_SIZE_Y), "<size=20>Third</size>"))
         {
             EnableCamera(CameraType.THIRD_PERSON);
         }
-        if (GUI.Button(new Rect(Screen.width - Common.UI_BUTTON_SIZE_X - Common.UI_BUTTON_GAP_X, 
-                                Screen.height - (Common.UI_BUTTON_SIZE_Y + Common.UI_LABEL_GAP_Y),
-                                Common.UI_BUTTON_SIZE_X, 
-                                Common.UI_BUTTON_SIZE_Y), "<size=20>Top</size>"))
+
+        if (GUI.Button(new Rect(Screen.width - UI_BUTTON_SIZE_X - UI_BUTTON_GAP_X, 
+                                Screen.height - (UI_BUTTON_SIZE_Y + UI_BUTTON_GAP_Y),
+                                UI_BUTTON_SIZE_X, 
+                                UI_BUTTON_SIZE_Y), "<size=20>Top</size>"))
         {
             EnableCamera(CameraType.TOP_DOWN);
         }

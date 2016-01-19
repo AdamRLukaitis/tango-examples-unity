@@ -17,11 +17,12 @@
 //
 // </copyright>
 //-----------------------------------------------------------------------
-using System.Collections;
-using UnityEngine;
 
 namespace Tango
 {
+    using System.Collections;
+    using UnityEngine;
+
     /// <summary>
     /// Enumerations used by the Tango Service.
     /// </summary>
@@ -102,7 +103,7 @@ namespace Tango
             TANGO_COORDINATE_FRAME_IMU,
 
             /// <summary>
-            /// Display.
+            /// Display coordinate frame.
             /// </summary>
             TANGO_COORDINATE_FRAME_DISPLAY,
 
@@ -197,6 +198,11 @@ namespace Tango
             /// Feature Tracking Event.
             /// </summary>
             TANGO_EVENT_FEATURE_TRACKING,
+
+            /// <summary>
+            /// Area Learning Event.
+            /// </summary>
+            TANGO_EVENT_AREA_LEARNING,
         }    
 
         /// <summary>
@@ -210,7 +216,7 @@ namespace Tango
             TANGO_CONFIG_DEFAULT = 0,
 
             /// <summary>
-            /// Current.
+            /// Current config.
             /// </summary>
             TANGO_CONFIG_CURRENT,
 
@@ -223,6 +229,11 @@ namespace Tango
             /// Area learning.
             /// </summary>
             TANGO_CONFIG_AREA_LEARNING,
+
+            /// <summary>
+            /// Runtime configuration parameters.
+            /// </summary>
+            TANGO_CONFIG_RUNTIME,
 
             /// <summary>
             /// Maximum number allowable.
@@ -264,6 +275,22 @@ namespace Tango
             /// YCrCb 4:2:0 Planar.
             /// </summary>
             TANGO_HAL_PIXEL_FORMAT_YV12 = 0x32315659  
+        }
+
+        /// <summary>
+        /// Depth camera rates.
+        /// </summary>
+        public enum TangoDepthCameraRate
+        {
+            /// <summary>
+            /// Disable the depth camera entirely.
+            /// </summary>
+            DISABLED,
+
+            /// <summary>
+            /// The maximum depth camera rate supported.  This is 5 on the Tango tablet.
+            /// </summary>
+            MAXIMUM,
         }
     }
 }

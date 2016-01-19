@@ -18,9 +18,9 @@
 // </copyright>
 //-----------------------------------------------------------------------
 using System.Collections;
+using Tango;
 using UnityEditor;
 using UnityEngine;
-using Tango;
 
 /// <summary>
 /// Custom editor for the TangoApplication.
@@ -35,9 +35,14 @@ public class TangoInspector : Editor
     /// </summary>
     public override void OnInspectorGUI()
     {
+        m_tangoApplication.m_autoConnectToService = EditorGUILayout.Toggle("Auto-connect to Service",
+                                                                           m_tangoApplication.m_autoConnectToService);
+        EditorGUILayout.Space();
+
         _DrawMotionTrackingOptions(m_tangoApplication);
         _DrawDepthOptions(m_tangoApplication);
         _DrawVideoOverlayOptions(m_tangoApplication);
+        _DrawDevelopmentOptions(m_tangoApplication);
 
         if (GUI.changed)
         {
@@ -67,18 +72,14 @@ public class TangoInspector : Editor
             tangoApplication.m_motionTrackingAutoReset = EditorGUILayout.Toggle("Auto Reset", 
                                                                                 tangoApplication.m_motionTrackingAutoReset);
 
+            tangoApplication.m_enableADFLoading = EditorGUILayout.Toggle("Load ADF",
+                                                                         tangoApplication.m_enableADFLoading);
             tangoApplication.m_enableAreaLearning = EditorGUILayout.Toggle("Area Learning", 
                                                                            tangoApplication.m_enableAreaLearning);
-            if (tangoApplication.m_enableAreaLearning)
-            {
-                EditorGUI.indentLevel++;
-                tangoApplication.m_useExperimentalADF = EditorGUILayout.Toggle("High Accuracy (Experimental)", 
-                                                                               tangoApplication.m_useExperimentalADF);
-                EditorGUI.indentLevel--;
-            }
-            
+
             EditorGUI.indentLevel--;
         }
+
         EditorGUILayout.Space();
     }
 
@@ -107,6 +108,23 @@ public class TangoInspector : Editor
                                                                                     tangoApplication.m_useExperimentalVideoOverlay);
             EditorGUI.indentLevel--;
         }
+
+        EditorGUILayout.Space();
+    }
+
+    /// <summary>
+    /// Draws development options.
+    /// 
+    /// These should only be set while in development.
+    /// </summary>
+    /// <param name="tangoApplication">Tango application.</param>
+    private void _DrawDevelopmentOptions(TangoApplication tangoApplication)
+    {
+        GUILayout.Label("Development Options (Disable these before publishing)", GUILayout.ExpandWidth(true));
+        EditorGUI.indentLevel++;
+        tangoApplication.m_allowOutOfDateTangoAPI = EditorGUILayout.Toggle("Allow out of date API",
+                                                                           m_tangoApplication.m_allowOutOfDateTangoAPI);
+        EditorGUI.indentLevel--;
         EditorGUILayout.Space();
     }
 }
